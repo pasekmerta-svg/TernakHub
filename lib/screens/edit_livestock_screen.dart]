@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/saved_livestock.dart';
+import '../providers/livestock_provider.dart';
+
+class EditLivestockScreen extends StatefulWidget {
+  final SavedLivestock item;
+
+  const EditLivestockScreen({super.key, required this.item});
+
+  @override
+  State<EditLivestockScreen> createState() => _EditLivestockScreenState();
+}
+
+class _EditLivestockScreenState extends State<EditLivestockScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _phoneController;
+  late TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item.livestockName);
+    _priceController = TextEditingController(text: widget.item.price.toStringAsFixed(0));
+    _phoneController = TextEditingController(text: widget.item.sellerPhone);
+    _notesController = TextEditingController(text: widget.item.notes);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Catatan Incaran'),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Nama Ternak', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Harga (Rp)', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(labelText: 'No HP Peternak', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Catatan', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final updatedItem = SavedLivestock(
+                      id: widget.item.id,
+                      livestockName: _nameController.text,
+                      price: double.parse(_priceController.text),
+                      sellerPhone: _phoneController.text,
+                      notes: _notesController.text,
+                      createdAt: widget.item.createdAt,
+                    );
+
+                    final success = await Provider.of<LivestockProvider>(context, listen: false).updateSavedItem(updatedItem);
+
+                    if (mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Catatan berhasil diperbarui!')),
+                        );
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Gagal memperbarui data.')),
+                        );
+                      }
+                    }
+                  }
+                },
+                child: const Text('Perbarui Data'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
